@@ -1,8 +1,8 @@
-# CM-13.0 Device tree for Samsung GT-S7580 (kylepro)
+# AOSP(android-n_preview-3) Device tree for Samsung GT-S7582 (kyleprods)
 
 ### Specs (Physically inspected):
   - CPU: Cortex-A9 (Little endian, Dual Core)
-  - Codename: KYLEPRO
+  - Codename: KYLEPRODS
   - Display Panel: NT35510 (TFT)
   - Display Resolution: 480x800 (240dpi)
   - EMMC: 4GB (Usable ~2.2GB)
@@ -18,12 +18,36 @@
   - Touch Panel: IST3032 (Max 2 Touch Points?)
   - WIFI/Bluetooth/FM-Radio: BCM4330
 
+ 
+### How to build Android N
+Export ninja:
+export USE_NINJA=true
+
+Setup Kati: 
+- cd ~/[android-directory]
+- git clone https://github.com/google/kati 
+- cd kati 
+- make
+
+Building ROM
+- cd [android-directory]
+- patch -p1 < device/samsung/kyleprods/android-n.diff
+- source build/envsetup.sh
+- lunch aosp_kyleprods-userdebug
+- ~/[android-directory]/kati/m2n --kati_stats
+- ./ninja.sh otapackage
+
+Make Clean:
+- ./ninja.sh -t clean
+
 ### Notice:
-  - Apply patch *PATCH_CM-13.0.diff* to root directory of CM-13.0 source code before build
+  - Apply patch *android-n.diff* to root directory of Android source code before build
+ 
 
 ### Other resource:
   - Kernel source: https://github.com/SandPox/android_kernel_samsung_kyleproxx
   - Vendor blobs: https://github.com/SandPox/android_vendor_samsung_kyleproxx
+  -https://github.com/ishantvivek/android_vendor_samsung_kyleproxx
 
 ### More Information:
 ```sh
@@ -74,6 +98,7 @@ mmcblk0p19: 0046c000 00000400 "userdata"
 ### Credits (Sort by alphabetical order):
   - Ishant Vivek
   - Pawitp
+  - TheComputerGuy96
   - The CyanogenMod Team
   - TheNikiz
   - Zim555
