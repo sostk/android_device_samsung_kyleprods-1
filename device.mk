@@ -30,6 +30,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml
 
+# FFMPEG CONFIG
+PRODUCT_COPY_FILES += \
+    device/samsung/kyleprods/configs/media_codecs_ffmpeg.xml:system/etc/media_codecs_ffmpeg.xml
+
 # Insecure ADB
 ADDITIONAL_DEFAULT_PROPERTIES += \
     ro.secure=0 \
