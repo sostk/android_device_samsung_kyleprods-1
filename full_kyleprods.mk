@@ -12,6 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-add_lunch_combo xosp_kyleprods-userdebug
+# Inherit from the common Open Source product configuration
+$(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
+
+PRODUCT_NAME := full_kyleprods
+PRODUCT_DEVICE := kyleprods
+PRODUCT_BRAND := Samsung
+PRODUCT_MODEL := AOSP on kyleprods
+PRODUCT_MANUFACTURER := samsung
+PRODUCT_RESTRICT_VENDOR_FILES := false
+
+$(call inherit-product, device/samsung/kyleprods/device_kyleprods.mk)
