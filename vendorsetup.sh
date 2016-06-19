@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-add_lunch_combo xosp_kyleprods-userdebug
+add_lunch_combo cyanpop_kyleprods-userdebug
