@@ -1,6 +1,5 @@
-# Boot animation
-TARGET_SCREEN_HEIGHT := 800
-TARGET_SCREEN_WIDTH := 480
+#BootAnimation
+XOSP_BOOTANIMATION_NAME := 480
 
 # Inherit some common xosp stuff.
 $(call inherit-product, vendor/xosp/config/common_full_phone.mk)
