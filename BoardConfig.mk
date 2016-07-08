@@ -28,15 +28,17 @@ BOARD_KERNEL_PAGESIZE                       := 4096
 BOARD_KERNEL_OFFSET                         := 0x00008000
 BOARD_RAMDISK_OFFSET                        := 0x01000000
 BOARD_KERNEL_TAGS_OFFSET                    := 0x00000100
+ifeq ($(BUILD_TWRP),true)
+    TARGET_KERNEL_CONFIG                    := bcm21664_hawaii_ss_kyleproxx_rev00_recovery_defconfig
+else
+    TARGET_KERNEL_CONFIG                    := bcm21664_hawaii_ss_kyleprods_rev00_cyanogenmod_defconfig
+endif
+TARGET_KERNEL_SOURCE                        := kernel/samsung/kyleproxx
+TARGET_KERNEL_CUSTOM_TOOLCHAIN              := arm-eabi-4.7
 
-#Kernel cmdline
-#BOARD_KERNEL_CMDLINE += androidboot.hardware=hawaii_ss_kyleprods
-
-#Prebuilt
-TARGET_PREBUILT_KERNEL                      := true
-
-#TARGET_KERNEL_SOURCE                        := kernel/samsung/kyleproxx
-#TARGET_KERNEL_CUSTOM_TOOLCHAIN              := arm-eabi-4.6
+# Extended filesystem support
+TARGET_KERNEL_HAVE_EXFAT                    := true
+TARGET_KERNEL_HAVE_NTFS                     := true
 
 # Partition size
 BOARD_BOOTIMAGE_PARTITION_SIZE              := 8388608
@@ -84,6 +86,9 @@ TARGET_USES_CPU_BOOST_HINT                  := true
 # Resolution
 TARGET_SCREEN_HEIGHT                        := 800
 TARGET_SCREEN_WIDTH                         := 480
+
+# Clang-Build
+#USE_CLANG_PLATFORM_BUILD                    := true
 
 # Hardware rendering
 USE_OPENGL_RENDERER                         := true
@@ -165,4 +170,5 @@ BOARD_MTP_DEVICE                            := /dev/mtp_usb
 TARGET_SPECIFIC_HEADER_PATH                 := device/samsung/kyleprods/include
 
 # SELinux
-BOARD_SEPOLICY_DIRS += device/samsung/kyleprods/sepolicy
+BOARD_SEPOLICY_DIRS += \
+    device/samsung/kyleprods/sepolicy
