@@ -88,7 +88,7 @@ TARGET_SCREEN_HEIGHT                        := 800
 TARGET_SCREEN_WIDTH                         := 480
 
 # Clang-Build
-#USE_CLANG_PLATFORM_BUILD                    := true
+USE_CLANG_PLATFORM_BUILD                    := true
 
 # Hardware rendering
 USE_OPENGL_RENDERER                         := true
