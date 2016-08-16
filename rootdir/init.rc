@@ -112,7 +112,6 @@ on init
     write /proc/sys/kernel/sched_tunable_scaling 0
     write /proc/sys/kernel/sched_latency_ns 10000000
     write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
-    write /proc/sys/kernel/sched_compat_yield 1
     write /proc/sys/kernel/sched_child_runs_first 0
 
     write /proc/sys/kernel/randomize_va_space 2
@@ -140,7 +139,6 @@ on init
     chown system system /dev/cpuctl
     chown system system /dev/cpuctl/tasks
     chmod 0666 /dev/cpuctl/tasks
-    write /dev/cpuctl/cpu.shares 1024
     write /dev/cpuctl/cpu.rt_runtime_us 800000
     write /dev/cpuctl/cpu.rt_period_us 1000000
 
@@ -572,6 +570,11 @@ on property:sys.sysctl.extra_free_kbytes=*
 on property:sys.sysctl.tcp_def_init_rwnd=*
     write /proc/sys/net/ipv4/tcp_default_init_rwnd ${sys.sysctl.tcp_def_init_rwnd}
 
+on property:security.perf_harden=0
+    write /proc/sys/kernel/perf_event_paranoid 1
+
+on property:security.perf_harden=1
+    write /proc/sys/kernel/perf_event_paranoid 3
 
 ## Daemon processes to be run by init.
 ##
