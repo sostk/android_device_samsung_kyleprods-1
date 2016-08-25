@@ -76,24 +76,6 @@
  #endif
  
  /*
---- a/system/core/init/init.cpp
-+++ b/system/core/init/init.cpp
-@@ -343,7 +343,7 @@
-         { "ro.boot.mode",       "ro.bootmode",   "unknown", },
-         { "ro.boot.baseband",   "ro.baseband",   "unknown", },
-         { "ro.boot.bootloader", "ro.bootloader", "unknown", },
--        { "ro.boot.hardware",   "ro.hardware",   "unknown", },
-+        { "ro.boot.hardware",   "ro.hardware",   "hawaii_ss_kyleprods", },
-         { "ro.boot.revision",   "ro.revision",   "0", },
-     };
-     for (size_t i = 0; i < ARRAY_SIZE(prop_map); i++) {
-@@ -650,4 +650,4 @@
-     }
- 
-     return 0;
--}
-+}
-\ No newline at end of file
 --- a/system/sepolicy/domain.te
 +++ b/system/sepolicy/domain.te
 @@ -187,7 +187,7 @@
