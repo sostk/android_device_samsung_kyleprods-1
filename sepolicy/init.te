@@ -1,7 +1,8 @@
-# chmod in init.capri_ss_baffin.rc (for bkmgrd)
+# chmod in init.capri.rc (for bkmgrd)
 allow init block_device:blk_file setattr;
 allow init radio_device:blk_file setattr;
 
+allow init usb_device:chr_file { write ioctl };
 allow init serial_device:chr_file { write ioctl };
 allow init radio_block_device:blk_file { write setattr };
 allow init root_block_device:blk_file setattr;
@@ -10,5 +11,4 @@ allow init tmpfs:lnk_file create;
 
 # insmod
 allow init self:capability sys_module; # TODO: want sys_ptrace too
-
 allow init kernel:security setenforce;

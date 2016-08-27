@@ -1,0 +1,15 @@
+type gpsd, domain;
+type gpsd_exec, exec_type, file_type;
+
+init_daemon_domain(gpsd)
+
+allow gpsd system_data_file:dir rw_dir_perms;
+
+file_type_auto_trans(gpsd, system_data_file, gps_data_file);
+allow gpsd gps_data_file:dir rw_dir_perms;
+allow gpsd gps_data_file:notdevfile_class_set create_file_perms;
+
+# Honor LD_PRELOAD
+allow init gpsd:process noatsecure;
+
+wakelock_use(gpsd)
