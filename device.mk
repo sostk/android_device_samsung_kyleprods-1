@@ -13,12 +13,12 @@ PRODUCT_COPY_FILES += \
 
 # Init files
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/fstab.hawaii_ss_kyleprods:root/fstab.hawaii_ss_kyleprods \
+    $(LOCAL_PATH)/rootdir/fstab.kyleprods:root/fstab.kyleprods \
     $(LOCAL_PATH)/rootdir/init.rc:root/init.rc \
-    $(LOCAL_PATH)/rootdir/init.hawaii_ss_kyleprods.rc:root/init.hawaii_ss_kyleprods.rc \
+    $(LOCAL_PATH)/rootdir/init.kyleprods.rc:root/init.kyleprods.rc \
     $(LOCAL_PATH)/rootdir/init.bcm2166x.usb.rc:root/init.bcm2166x.usb.rc \
     $(LOCAL_PATH)/rootdir/init.log.rc:root/init.log.rc \
-    $(LOCAL_PATH)/rootdir/ueventd.hawaii_ss_kyleprods.rc:root/ueventd.hawaii_ss_kyleprods.rc
+    $(LOCAL_PATH)/rootdir/ueventd.kyleprods.rc:root/ueventd.kyleprods.rc
 
 # Google's Software Decoder.
 PRODUCT_COPY_FILES += \

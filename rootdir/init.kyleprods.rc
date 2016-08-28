@@ -415,8 +415,8 @@ on charger
     class_start sec-charger
 
 on fs
-    mount_all /fstab.hawaii_ss_kyleprods
-    swapon_all fstab.hawaii_ss_kyleprods
+    mount_all /fstab.kyleprods
+    swapon_all fstab.kyleprods
 
     setprop ro.crypto.fuse_sdcard true
 
