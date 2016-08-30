@@ -3,7 +3,7 @@
 # specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
 
 # <src>                                             <mnt_point>         <type>  <mnt_flags and options>                                                         <fs_mgr_flags>
-/dev/block/platform/sdhci.1/by-name/system          /system             ext4    ro,noatime,noauto_da_alloc                                                      wait
+/dev/block/platform/sdhci.1/by-name/system          /system             ext4    rw,noatime,noauto_da_alloc                                                      wait
 /dev/block/platform/sdhci.1/by-name/efs             /efs                ext4    noatime,nosuid,nodev,journal_async_commit,errors=panic                          wait,check
 /dev/block/platform/sdhci.1/by-name/CSC             /cache              ext4    noatime,nosuid,nodev,discard,journal_async_commit,errors=panic                  wait,check
 /dev/block/platform/sdhci.1/by-name/KERNEL          /boot               emmc    defaults                                                                        defaults
