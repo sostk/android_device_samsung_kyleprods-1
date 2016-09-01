@@ -54,7 +54,7 @@ BOARD_FLASH_BLOCK_SIZE                      := 262144
 BOARD_HAVE_BLUETOOTH                        := true
 BOARD_HAVE_BLUETOOTH_BCM                    := true
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/samsung/kyleprods/bluetooth
-BOARD_BLUEDROID_VENDOR_CONF                 := device/samsung/kyleprods/bluetooth/libbt_vndcfg.txt
+BOARD_CUSTOM_BT_CONFIG                 := device/samsung/kyleprods/bluetooth/libbt_vndcfg.txt
 
 # Connectivity - Wi-Fi
 BOARD_HAVE_SAMSUNG_WIFI                     := true
@@ -119,7 +119,7 @@ BOARD_CHARGER_ENABLE_SUSPEND                := true
 BOARD_HAL_STATIC_LIBRARIES                  := libhealthd.hawaii
 
 # RIL
-#BOARD_RIL_CLASS                             := ../../../device/samsung/kyleprods/ril/
+BOARD_RIL_CLASS                             := ../../../device/samsung/kyleprods/ril/
 COMMON_GLOBAL_CFLAGS                        += -DDISABLE_ASHMEM_TRACKING
 
 # Recovery

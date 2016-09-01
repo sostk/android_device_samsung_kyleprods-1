@@ -37,7 +37,8 @@ ADDITIONAL_DEFAULT_PROPERTIES += \
 
 # GPS/RIL
 PRODUCT_PACKAGES += \
-    libglgps-compat
+    libglgps-compat \
+    libstlport
 
 # Packages
 PRODUCT_PACKAGES += \
@@ -111,8 +112,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
     wifi.interface=wlan0 \
     mobiledata.interfaces=rmnet0 \
     ro.telephony.ril_class=SamsungBCMRIL \
-    persist.radio.multisim.config=none \
-    ro.multisim.simslotcount=1 \
+    persist.radio.multisim.config=dsds \
+    ro.multisim.simslotcount=2 \
     cm.updater.uri=http://ota.sandpox.org/api \
     ro.telephony.call_ring.multiple=0 \
     camera2.portability.force_api=1 \
