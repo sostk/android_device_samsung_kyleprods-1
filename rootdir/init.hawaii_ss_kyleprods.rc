@@ -416,10 +416,6 @@ on charger
 on fs
     mount_all /fstab.hawaii_ss_kyleprods
     swapon_all fstab.hawaii_ss_kyleprods
-        
-# Tmp
-    exec mkdir /system/test
-    mkdir /system/test2
 
     setprop ro.crypto.fuse_sdcard true
 
