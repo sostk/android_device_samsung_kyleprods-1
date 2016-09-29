@@ -142,6 +142,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.dex2oat-flags=--no-watch-dog
 
+# Low-RAM configs
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.sys.fw.bg_apps_limit=12 \
+    config.disable_atlas=true
+
 # Use Awesomeplayer
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.media.use-awesome=true
