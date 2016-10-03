@@ -165,7 +165,7 @@ BOARD_MTP_DEVICE                            := /dev/mtp_usb
 
 # GPS
 TARGET_SPECIFIC_HEADER_PATH                 := device/samsung/kyleprods/include
-BOARD_GLOBAL_CFLAGS                         += -DCOMPAT_SENSORS_M
+COMMON_GLOBAL_CFLAGS                        += -DCOMPAT_SENSORS_M
 
 # Some of our vendor libs have text relocation
 TARGET_NEEDS_TEXT_RELOCATIONS               := true
