@@ -71,6 +71,15 @@ PRODUCT_PACKAGES += \
     lights.hawaii \
     libstagefrighthw
 
+# Stagefright FFMPEG plugin
+PRODUCT_PACKAGES += \
+    libffmpeg_extractor \
+    libffmpeg_omx
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    media.sf.omx-plugin=libffmpeg_omx.so \
+    media.sf.extractor-plugin=libffmpeg_extractor.so
+
 # IPv6 tethering
 PRODUCT_PACKAGES += \
     ebtables \
