@@ -80,6 +80,12 @@ PRODUCT_PROPERTY_OVERRIDES += \
     media.sf.omx-plugin=libffmpeg_omx.so \
     media.sf.extractor-plugin=libffmpeg_extractor.so
 
+# Media
+PRODUCT_PROPERTY_OVERRIDES += \
+    media.stagefright.codecremote=false \
+    media.stagefright.legacyencoder=true \
+    media.stagefright.less-secure=true
+
 # IPv6 tethering
 PRODUCT_PACKAGES += \
     ebtables \
