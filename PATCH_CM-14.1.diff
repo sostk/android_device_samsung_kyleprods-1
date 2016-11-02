@@ -449,4 +449,558 @@ diff -ur a/system/core/libutils/VectorImpl.cpp b/system/core/libutils/VectorImpl
 +
  /*****************************************************************************/
  
- }; // namespace android            
+ }; // namespace android
+diff -ur a/frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java b/frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java
+--- a/frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java	2016-11-02 16:13:26.564000000 +0000
++++ b/frameworks/base/services/core/java/com/android/server/power/PowerManagerService.java	2016-11-02 16:36:53.248000000 +0000
+@@ -194,7 +194,7 @@
+     private static final int HALT_MODE_REBOOT = 1;
+     private static final int HALT_MODE_REBOOT_SAFE_MODE = 2;
+ 
+-    private static final int BUTTON_ON_DURATION = 5 * 1000;
++    private static final int BUTTON_ON_DURATION = 2 * 1000;
+ 
+     private static final float PROXIMITY_NEAR_THRESHOLD = 5.0f;
+ 
+@@ -272,6 +272,7 @@
+     // Timestamp of the last call to user activity.
+     private long mLastUserActivityTime;
+     private long mLastUserActivityTimeNoChangeLights;
++    private long mLastButtonActivityTime;
+ 
+     // Timestamp of last interactive power hint.
+     private long mLastInteractivePowerHintTime;
+@@ -1290,6 +1291,10 @@
+                     return true;
+                 }
+             } else {
++                if (eventTime > mLastButtonActivityTime && (event & PowerManager.USER_ACTIVITY_EVENT_BUTTON) !=0) {
++                    mLastButtonActivityTime = eventTime;
++                    mDirty |= DIRTY_USER_ACTIVITY;
++                }
+                 if (eventTime > mLastUserActivityTime) {
+                     mLastUserActivityTime = eventTime;
+                     mDirty |= DIRTY_USER_ACTIVITY;
+@@ -1850,7 +1855,7 @@
+                             mKeyboardLight.setBrightness(mKeyboardVisible ?
+                                     keyboardBrightness : 0);
+                             if (mButtonTimeout != 0
+-                                    && now > mLastUserActivityTime + mButtonTimeout) {
++                                    && now > mLastButtonActivityTime + mButtonTimeout) {
+                                 mButtonsLight.setBrightness(0);
+                             } else {
+                                 if (!mProximityPositive) {
+diff -ur a/frameworks/av/include/media/stagefright/ColorConverter.h b/frameworks/av/include/media/stagefright/ColorConverter.h
+--- a/frameworks/av/include/media/stagefright/ColorConverter.h	2016-11-02 16:43:49.876000000 +0000
++++ b/frameworks/av/include/media/stagefright/ColorConverter.h	2016-11-02 16:43:02.576000000 +0000
+@@ -67,6 +67,9 @@
+     status_t convertCbYCrY(
+             const BitmapParams &src, const BitmapParams &dst);
+ 
++    status_t convertYCbYCr(
++            const BitmapParams &src, const BitmapParams &dst);
++
+     status_t convertYUV420Planar(
+             const BitmapParams &src, const BitmapParams &dst);
+ 
+diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/libstagefright/ACodec.cpp
+--- a/frameworks/av/media/libstagefright/ACodec.cpp	2016-11-02 16:43:49.944000000 +0000
++++ b/frameworks/av/media/libstagefright/ACodec.cpp	2016-11-02 16:43:02.580000000 +0000
+@@ -799,11 +799,7 @@
+ 
+     status_t err;
+     if (mNativeWindow != NULL && portIndex == kPortIndexOutput) {
+-        if (storingMetadataInDecodedBuffers()) {
+-            err = allocateOutputMetadataBuffers();
+-        } else {
+             err = allocateOutputBuffersFromNativeWindow();
+-        }
+     } else {
+         OMX_PARAM_PORTDEFINITIONTYPE def;
+         InitOMXParams(&def);
+@@ -1004,6 +1000,25 @@
+     OMX_COLOR_FORMATTYPE eNativeColorFormat = def.format.video.eColorFormat;
+     setNativeWindowColorFormat(eNativeColorFormat);
+ #endif
++    ALOGE("ACodec:PATCH:setupNativeWindowSizeFormatAndUsage[%s] def.format.video.eColorFormat(%i)", mComponentName.c_str(), def.format.video.eColorFormat);
++    OMX_COLOR_FORMATTYPE HalColorFormat;
++    status_t omxresuilts;
++    switch (def.format.video.eColorFormat) {
++        case OMX_COLOR_FormatYCbYCr:
++            def.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++            omxresuilts = mOMX->setParameter(mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
++            if (omxresuilts != OK) {
++                ALOGE("PATCH:ACodec:configureOutputBuffersFromNativeWindow setParameter(OMX_IndexParamPortDefinition) ERROR");
++            }
++            HalColorFormat = (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YV12;
++        break;
++        case OMX_COLOR_FormatYUV420Planar:
++            HalColorFormat = (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YV12;
++        break;
++        default:
++            HalColorFormat = def.format.video.eColorFormat;
++        break;
++    }
+ 
+     ALOGV("gralloc usage: %#x(OMX) => %#x(ACodec)", omxUsage, usage);
+     err = setNativeWindowSizeFormatAndUsage(
+@@ -1013,7 +1028,7 @@
+ #ifdef USE_SAMSUNG_COLORFORMAT
+             eNativeColorFormat,
+ #else
+-            def.format.video.eColorFormat,
++            HalColorFormat,
+ #endif
+             mRotationDegrees,
+             usage,
+@@ -1842,14 +1857,12 @@
+             mInputMetadataType = (MetadataBufferType)storeMeta;
+         }
+ 
+-        uint32_t usageBits;
+-        if (mOMX->getParameter(
+-                mNode, (OMX_INDEXTYPE)OMX_IndexParamConsumerUsageBits,
+-                &usageBits, sizeof(usageBits)) == OK) {
+-            inputFormat->setInt32(
+-                    "using-sw-read-often", !!(usageBits & GRALLOC_USAGE_SW_READ_OFTEN));
+-        }
+     }
++#ifdef HAWAII_HWC
++    else if (!strncmp(mComponentName.c_str(), "OMX.brcm.video.h264.hw.decoder", 30)) {
++           setMinBufferSize(kPortIndexInput, (1280 * 720 * 3) / 2);
++    }
++#endif
+ 
+     int32_t prependSPSPPS = 0;
+     if (encoder
+@@ -2350,22 +2363,24 @@
+         err = setMinBufferSize(kPortIndexInput, (size_t)maxInputSize);
+     } else if (!strcmp("OMX.Nvidia.aac.decoder", mComponentName.c_str())) {
+         err = setMinBufferSize(kPortIndexInput, 8192);  // XXX
++    } else if (!strncmp(mComponentName.c_str(), "OMX.brcm.video.h264.hw.decoder", 30)) {
++        setMinBufferSize(kPortIndexInput, (1280 * 720 * 3) / 2);
+     }
+ 
+-    int32_t priority;
+-    if (msg->findInt32("priority", &priority)) {
+-        err = setPriority(priority);
+-    }
+-
+-    int32_t rateInt = -1;
+-    float rateFloat = -1;
+-    if (!msg->findFloat("operating-rate", &rateFloat)) {
+-        msg->findInt32("operating-rate", &rateInt);
+-        rateFloat = (float)rateInt;  // 16MHz (FLINTMAX) is OK for upper bound.
+-    }
+-    if (rateFloat > 0) {
+-        err = setOperatingRate(rateFloat, video);
+-    }
++    //int32_t priority;
++    //if (msg->findInt32("priority", &priority)) {
++    //    err = setPriority(priority);
++    //}
++
++    //int32_t rateInt = -1;
++    //float rateFloat = -1;
++    //if (!msg->findFloat("operating-rate", &rateFloat)) {
++    //    msg->findInt32("operating-rate", &rateInt);
++    //    rateFloat = (float)rateInt;  // 16MHz (FLINTMAX) is OK for upper bound.
++    //}
++    //if (rateFloat > 0) {
++    //    err = setOperatingRate(rateFloat, video);
++    //}
+ 
+     // NOTE: both mBaseOutputFormat and mOutputFormat are outputFormat to signal first frame.
+     mBaseOutputFormat = outputFormat;
+@@ -3159,12 +3174,37 @@
+     format.nIndex = 0;
+     bool found = false;
+ 
++    if(format.eColorFormat == OMX_COLOR_FormatYCbYCr){
++        if (!strncmp(mComponentName.c_str(), "OMX.brcm.", 9)){
++            format.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++            status_t errs = mOMX->setParameter(mNode, OMX_IndexParamVideoPortFormat, &format, sizeof(format));
++                if (errs != OK){
++                    ALOGE("PATCH:ACodec:setVideoPortFormatType setParameter failed: %d", errs);
++                }
++        }
++    }
++    if(colorFormat == OMX_COLOR_FormatYCbYCr){
++        if (!strncmp(mComponentName.c_str(), "OMX.brcm.", 9)){
++            colorFormat = OMX_COLOR_FormatYUV420Planar;
++        }
++    }
++
+     for (OMX_U32 index = 0; index <= kMaxIndicesToCheck; ++index) {
+         format.nIndex = index;
+         status_t err = mOMX->getParameter(
+                 mNode, OMX_IndexParamVideoPortFormat,
+                 &format, sizeof(format));
+ 
++        if (!strncmp("OMX.brcm.video.h264.hw.decoder", mComponentName.c_str(), 30)) {
++            format.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++        }
++        err = mOMX->getParameter(
++                mNode, OMX_IndexParamVideoPortFormat,
++                     &format, sizeof(format));
++        if((unsigned int)err == 0x80001005){
++            err= OMX_ErrorNoMore;
++        }
++
+         if (err != OK) {
+             return err;
+         }
+@@ -3180,6 +3220,7 @@
+             colorFormat = format.eColorFormat;
+         }
+ 
++
+         // The following assertion is violated by TI's video decoder.
+         // CHECK_EQ(format.nIndex, index);
+ 
+@@ -3273,6 +3314,21 @@
+                 || format.eColorFormat == OMX_TI_COLOR_FormatYUV420PackedSemiPlanar) {
+             break;
+         }
++        if (!strncmp("OMX.brcm.video.h264.hw.decoder", mComponentName.c_str(), 30)) {
++            format.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++        }
++        if (format.eColorFormat == OMX_COLOR_FormatYUV420Planar) {
++            while (OMX_ErrorNoMore != err) {
++            format.nIndex++;
++            err = mOMX->getParameter(
++                    mNode, OMX_IndexParamVideoPortFormat,
++                        &format, sizeof(format));
++            if((unsigned int)err == 0x80001005){
++                err = OMX_ErrorNoMore;
++            }
++            }
++        }
++
+         // find best legacy non-standard format
+         OMX_U32 flexibleEquivalent;
+         if (legacyFormat.eColorFormat == OMX_COLOR_FormatUnused
+@@ -4852,6 +4908,16 @@
+     image.mNumPlanes = 0;
+ 
+     const OMX_COLOR_FORMATTYPE fmt = params.eColorFormat;
++
++    switch(params.eColorFormat){
++        case OMX_COLOR_FormatYCbYCr:{
++            params.eColorFormat = (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YV12;
++        }
++        break;
++        default:
++        break;
++    }
++
+     image.mWidth = params.nFrameWidth;
+     image.mHeight = params.nFrameHeight;
+ 
+@@ -7746,14 +7812,14 @@
+         }
+     }
+ 
+-    float rate;
+-    if (params->findFloat("operating-rate", &rate) && rate > 0) {
+-        status_t err = setOperatingRate(rate, mIsVideo);
+-        if (err != OK) {
+-            ALOGE("Failed to set parameter 'operating-rate' (err %d)", err);
+-            return err;
+-        }
+-    }
++    //float rate;
++    //if (params->findFloat("operating-rate", &rate) && rate > 0) {
++    //    status_t err = setOperatingRate(rate, mIsVideo);
++    //    if (err != OK) {
++    //        ALOGE("Failed to set parameter 'operating-rate' (err %d)", err);
++    //        return err;
++    //    }
++    //}
+ 
+     int32_t intraRefreshPeriod = 0;
+     if (params->findInt32("intra-refresh-period", &intraRefreshPeriod)
+@@ -8397,9 +8463,13 @@
+                     builder->addColorFormat(flexibleEquivalent);
+                 }
+             }
+-            supportedColors.push(portFormat.eColorFormat);
+-            builder->addColorFormat(portFormat.eColorFormat);
+-
++            if(portFormat.eColorFormat == OMX_COLOR_FormatYCbYCr) {
++                supportedColors.push(OMX_COLOR_FormatYUV420Planar);
++                builder->addColorFormat(OMX_COLOR_FormatYUV420Planar);
++            }else{
++                supportedColors.push(portFormat.eColorFormat);
++                builder->addColorFormat(portFormat.eColorFormat);
++            }
+             if (index == kMaxIndicesToCheck) {
+                 ALOGW("[%s] stopping checking formats after %u: %s(%x)",
+                         name.c_str(), index,
+diff -ur a/frameworks/av/media/libstagefright/MPEG4Writer.cpp b/frameworks/av/media/libstagefright/MPEG4Writer.cpp
+--- a/frameworks/av/media/libstagefright/MPEG4Writer.cpp	2016-11-02 16:43:49.956000000 +0000
++++ b/frameworks/av/media/libstagefright/MPEG4Writer.cpp	2016-11-02 16:43:02.584000000 +0000
+@@ -2523,14 +2523,10 @@
+         if (mResumed) {
+             int64_t durExcludingEarlierPausesUs = timestampUs - previousPausedDurationUs;
+             if (WARN_UNLESS(durExcludingEarlierPausesUs >= 0ll, "for %s track", trackName)) {
+-                copy->release();
+-                return ERROR_MALFORMED;
+             }
+ 
+             int64_t pausedDurationUs = durExcludingEarlierPausesUs - mTrackDurationUs;
+             if (WARN_UNLESS(pausedDurationUs >= lastDurationUs, "for %s track", trackName)) {
+-                copy->release();
+-                return ERROR_MALFORMED;
+             }
+ 
+             previousPausedDurationUs += pausedDurationUs - lastDurationUs;
+@@ -2539,8 +2535,6 @@
+ 
+         timestampUs -= previousPausedDurationUs;
+         if (WARN_UNLESS(timestampUs >= 0ll, "for %s track", trackName)) {
+-            copy->release();
+-            return ERROR_MALFORMED;
+         }
+ 
+         if (!mIsAudio) {
+@@ -2566,8 +2560,6 @@
+             cttsOffsetTimeUs =
+                     timestampUs + kMaxCttsOffsetTimeUs - decodingTimeUs;
+             if (WARN_UNLESS(cttsOffsetTimeUs >= 0ll, "for %s track", trackName)) {
+-                copy->release();
+-                return ERROR_MALFORMED;
+             }
+ 
+             timestampUs = decodingTimeUs;
+@@ -2578,8 +2570,6 @@
+             currCttsOffsetTimeTicks =
+                     (cttsOffsetTimeUs * mTimeScale + 500000LL) / 1000000LL;
+             if (WARN_UNLESS(currCttsOffsetTimeTicks <= 0x0FFFFFFFFLL, "for %s track", trackName)) {
+-                copy->release();
+-                return ERROR_MALFORMED;
+             }
+ 
+             if (mStszTableEntries->count() == 0) {
+@@ -2620,8 +2610,6 @@
+         }
+ 
+         if (WARN_UNLESS(timestampUs >= 0ll, "for %s track", trackName)) {
+-            copy->release();
+-            return ERROR_MALFORMED;
+         }
+ 
+         ALOGV("%s media time stamp: %" PRId64 " and previous paused duration %" PRId64,
+@@ -2641,9 +2629,9 @@
+         if (currDurationTicks < 0ll) {
+             ALOGE("do not support out of order frames (timestamp: %lld < last: %lld for %s track",
+                     (long long)timestampUs, (long long)lastTimestampUs, trackName);
+-            copy->release();
+-            mSource->stop();
+-            return UNKNOWN_ERROR;
++            //copy->release();
++            //mSource->stop();
++            //return UNKNOWN_ERROR;
+         }
+ 
+         // if the duration is different for this sample, see if it is close enough to the previous
+@@ -2741,7 +2729,6 @@
+     }
+ 
+     if (isTrackMalFormed()) {
+-        err = ERROR_MALFORMED;
+     }
+ 
+     mOwner->trackProgressStatus(mTrackId, -1, err);
+diff -ur a/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp b/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp
+--- a/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp	2016-11-02 16:43:49.992000000 +0000
++++ b/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp	2016-11-02 16:43:02.584000000 +0000
+@@ -48,6 +48,7 @@
+     switch (mSrcFormat) {
+         case OMX_COLOR_FormatYUV420Planar:
+         case OMX_COLOR_FormatCbYCrY:
++        case OMX_COLOR_FormatYCbYCr:
+         case OMX_QCOM_COLOR_FormatYVU420SemiPlanar:
+         case OMX_COLOR_FormatYUV420SemiPlanar:
+         case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
+@@ -117,6 +118,10 @@
+         case OMX_COLOR_FormatCbYCrY:
+             err = convertCbYCrY(src, dst);
+             break;
++            
++        case OMX_COLOR_FormatYCbYCr:
++            err = convertYCbYCr(src, dst);
++            break;     
+ 
+         case OMX_QCOM_COLOR_FormatYVU420SemiPlanar:
+             err = convertQCOMYUV420SemiPlanar(src, dst);
+@@ -204,6 +209,71 @@
+     return OK;
+ }
+ 
++status_t ColorConverter::convertYCbYCr(
++        const BitmapParams &src, const BitmapParams &dst) {
++        ALOGE("PATCH:ColorConverter:convertYCbYCr");
++    // XXX Untested
++
++    uint8_t *kAdjustedClip = initClip();
++
++    if (!((src.mCropLeft & 1) == 0
++        && src.cropWidth() == dst.cropWidth()
++        && src.cropHeight() == dst.cropHeight())) {
++        return ERROR_UNSUPPORTED;
++    }
++
++    uint16_t *dst_ptr = (uint16_t *)dst.mBits
++        + dst.mCropTop * dst.mWidth + dst.mCropLeft;
++
++    const uint8_t *src_ptr = (const uint8_t *)src.mBits
++        + (src.mCropTop * dst.mWidth + src.mCropLeft) * 2;
++
++    for (size_t y = 0; y < src.cropHeight(); ++y) {
++        for (size_t x = 0; x < src.cropWidth(); x += 2) {
++            signed y1 = (signed)src_ptr[2 * x ] - 16;
++            signed y2 = (signed)src_ptr[2 * x + 2] - 16;
++            signed u = (signed)src_ptr[2 * x + 1] - 128;  
++            signed v = (signed)src_ptr[2 * x + 3] - 128;
++
++            signed u_b = u * 517;
++            signed u_g = -u * 100;
++            signed v_g = -v * 208;
++            signed v_r = v * 409;
++
++            signed tmp1 = y1 * 298;
++            signed b1 = (tmp1 + u_b) / 256;
++            signed g1 = (tmp1 + v_g + u_g) / 256;
++            signed r1 = (tmp1 + v_r) / 256;
++
++            signed tmp2 = y2 * 298;
++            signed b2 = (tmp2 + u_b) / 256;
++            signed g2 = (tmp2 + v_g + u_g) / 256;
++            signed r2 = (tmp2 + v_r) / 256;
++
++            uint32_t rgb1 =
++                ((kAdjustedClip[r1] >> 3) << 11)
++                | ((kAdjustedClip[g1] >> 2) << 5)
++                | (kAdjustedClip[b1] >> 3);
++
++            uint32_t rgb2 =
++                ((kAdjustedClip[r2] >> 3) << 11)
++                | ((kAdjustedClip[g2] >> 2) << 5)
++                | (kAdjustedClip[b2] >> 3);
++
++            if (x + 1 < src.cropWidth()) {
++                *(uint32_t *)(&dst_ptr[x]) = (rgb2 << 16) | rgb1;
++            } else {
++                dst_ptr[x] = rgb1;
++            }
++        }
++
++        src_ptr += src.mWidth * 2;
++        dst_ptr += dst.mWidth;
++    }
++
++    return OK;
++}
++
+ status_t ColorConverter::convertYUV420PlanarUseLibYUV(
+         const BitmapParams &src, const BitmapParams &dst) {
+     if (!((src.mCropLeft & 1) == 0
+@@ -557,4 +627,4 @@
+     return &mClip[-kClipMin];
+ }
+ 
+-}  // namespace android
++}  // namespace android
+\ No newline at end of file
+diff -ur a/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp b/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp
+--- a/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp	2016-11-02 16:43:50.012000000 +0000
++++ b/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp	2016-11-02 16:43:02.584000000 +0000
+@@ -381,6 +381,7 @@
+             }
+         } else if (type == kMetadataBufferTypeANWBuffer
+                 && header->nAllocLen >= sizeof(VideoNativeMetadata)) {
++#ifndef HAWAII_HWC
+             VideoNativeMetadata &nativeMeta = *(VideoNativeMetadata *)data;
+             if (nativeMeta.pBuffer != codecBuffer.mGraphicBuffer->getNativeBuffer()) {
+                 // should never happen
+@@ -388,6 +389,7 @@
+                         nativeMeta.pBuffer, codecBuffer.mGraphicBuffer->getNativeBuffer());
+                 CHECK(!"codecBufferEmptied: mismatched buffer");
+             }
++#endif
+         }
+     }
+ 
+diff -ur a/frameworks/av/services/audioflinger/Threads.cpp b/frameworks/av/services/audioflinger/Threads.cpp
+--- a/frameworks/av/services/audioflinger/Threads.cpp	2016-11-02 16:43:50.056000000 +0000
++++ b/frameworks/av/services/audioflinger/Threads.cpp	2016-11-02 16:43:15.304000000 +0000
+@@ -6294,6 +6294,7 @@
+         mTimestamp.mPosition[ExtendedTimestamp::LOCATION_SERVER] += framesRead;
+         mTimestamp.mTimeNs[ExtendedTimestamp::LOCATION_SERVER] = systemTime();
+ 
++#ifndef HAWAII_HWC
+         // Update server timestamp with kernel stats
+         if (mInput->stream->get_capture_position != nullptr
+                 && mPipeSource.get() == nullptr /* don't obtain for FastCapture, could block */) {
+@@ -6309,6 +6310,7 @@
+                 // as the read obtains a lock, preventing the timestamp call from executing.
+             }
+         }
++#endif
+         // Use this to track timestamp information
+         // ALOGD("%s", mTimestamp.toString().c_str());
+
+diff -ur a/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiNative.java b/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiNative.java
+--- a/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiNative.java	2016-11-02 16:47:21.404000000 +0000
++++ b/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiNative.java	2016-11-02 16:48:21.792000000 +0000
+@@ -1547,6 +1547,7 @@
+             return "*** failed to read kernel log ***";
+         }
+     }
++    public native static boolean setMode(int mode);
+ 
+     /* WIFI HAL support */
+ 
+diff -ur a/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiStateMachine.java b/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiStateMachine.java
+--- a/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiStateMachine.java	2016-11-02 16:47:21.416000000 +0000
++++ b/frameworks/opt/net/wifi/service/java/com/android/server/wifi/WifiStateMachine.java	2016-11-02 16:48:21.776000000 +0000
+@@ -1788,6 +1788,7 @@
+      */
+     public void setSupplicantRunning(boolean enable) {
+         if (enable) {
++            WifiNative.setMode(0);
+             sendMessage(CMD_START_SUPPLICANT);
+         } else {
+             mDisconnectDelayDuration = -1;
+@@ -1815,6 +1816,7 @@
+      */
+     public void setHostApRunning(WifiConfiguration wifiConfig, boolean enable) {
+         if (enable) {
++            WifiNative.setMode(1);
+             sendMessage(CMD_START_AP, wifiConfig);
+         } else {
+             sendMessage(CMD_STOP_AP);
+diff -ur a/frameworks/opt/net/wifi/service/jni/com_android_server_wifi_WifiNative.cpp b/frameworks/opt/net/wifi/service/jni/com_android_server_wifi_WifiNative.cpp
+--- a/frameworks/opt/net/wifi/service/jni/com_android_server_wifi_WifiNative.cpp	2016-11-02 16:47:21.448000000 +0000
++++ b/frameworks/opt/net/wifi/service/jni/com_android_server_wifi_WifiNative.cpp	2016-11-02 16:48:21.732000000 +0000
+@@ -136,6 +136,11 @@
+     return env->NewString((const jchar *)str.string(), str.size());
+ }
+ 
++static jboolean android_net_wifi_setMode(JNIEnv* env, jobject, jint type)
++{
++    return (jboolean)(::wifi_set_mode(type) == 0);
++}
++
+ static jboolean android_net_wifi_isDriverLoaded(JNIEnv* env, jclass)
+ {
+     return (::is_wifi_driver_loaded() == 1);
+@@ -2605,6 +2610,7 @@
+     { "doIntCommandNative", "(Ljava/lang/String;)I", (void*)android_net_wifi_doIntCommand },
+     { "doStringCommandNative", "(Ljava/lang/String;)Ljava/lang/String;",
+             (void*) android_net_wifi_doStringCommand },
++    { "setMode", "(I)Z", (void*) android_net_wifi_setMode},
+     { "startHalNative", "()Z", (void*) android_net_wifi_startHal },
+     { "stopHalNative", "()V", (void*) android_net_wifi_stopHal },
+     { "waitForHalEventNative", "()V", (void*) android_net_wifi_waitForHalEvents },                                          	             
