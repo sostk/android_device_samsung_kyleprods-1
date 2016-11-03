@@ -1003,4 +1003,26 @@ diff -ur a/frameworks/opt/net/wifi/service/jni/com_android_server_wifi_WifiNativ
 +    { "setMode", "(I)Z", (void*) android_net_wifi_setMode},
      { "startHalNative", "()Z", (void*) android_net_wifi_startHal },
      { "stopHalNative", "()V", (void*) android_net_wifi_stopHal },
-     { "waitForHalEventNative", "()V", (void*) android_net_wifi_waitForHalEvents },                                          	             
+     { "waitForHalEventNative", "()V", (void*) android_net_wifi_waitForHalEvents },
+diff -ur a/packages/apps/CMParts/src/org/cyanogenmod/cmparts/input/ButtonSettings.java b/packages/apps/CMParts/src/org/cyanogenmod/cmparts/input/ButtonSettings.java
+--- a/packages/apps/CMParts/src/org/cyanogenmod/cmparts/input/ButtonSettings.java	2016-11-03 04:41:44.908000000 +0000
++++ b/packages/apps/CMParts/src/org/cyanogenmod/cmparts/input/ButtonSettings.java	2016-11-03 04:44:14.452000000 +0000
+@@ -259,7 +259,6 @@
+         // Only visible on devices that does not have a navigation bar already,
+         // and don't even try unless the existing keys can be disabled
+         boolean needsNavigationBar = false;
+-        if (hardware.isSupported(CMHardwareManager.FEATURE_KEY_DISABLE)) {
+             try {
+                 IWindowManager wm = WindowManagerGlobal.getWindowManagerService();
+                 needsNavigationBar = wm.needsNavigationBar();
+@@ -274,9 +273,6 @@
+                 mNavigationPreferencesCat.setEnabled(mDisableNavigationKeys.isChecked());
+                 updateDisableNavkeysCategories(mDisableNavigationKeys.isChecked());
+             }
+-        } else {
+-            prefScreen.removePreference(mDisableNavigationKeys);
+-        }
+ 
+         if (hasPowerKey) {
+             if (!TelephonyUtils.isVoiceCapable(getActivity())) {
+                                               	             
