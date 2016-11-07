@@ -119,6 +119,9 @@ BOARD_HAL_STATIC_LIBRARIES                  := libhealthd.hawaii
 BOARD_RIL_CLASS                             := ../../../device/samsung/kyleprods/ril/
 COMMON_GLOBAL_CFLAGS                        += -DDISABLE_ASHMEM_TRACKING
 
+# Camera
+TARGET_HAS_LEGACY_CAMERA_HAL1               := true
+
 # Recovery
 # Compile with BUILD_TWRP=true when build TWRP recovery
 ifeq ($(BUILD_TWRP),true)
