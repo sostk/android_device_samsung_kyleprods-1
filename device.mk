@@ -91,7 +91,10 @@ PRODUCT_PACKAGES += \
     ebtables \
     ethertypes
 
-
+# Snap    
+PRODUCT_PACKAGES += \
+    Snap
+    
 # KSM
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.ksm.default=1
