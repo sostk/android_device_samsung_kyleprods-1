@@ -178,6 +178,9 @@ COMMON_GLOBAL_CFLAGS                        += -DCOMPAT_SENSORS_M
 # Some of our vendor libs have text relocation
 TARGET_NEEDS_TEXT_RELOCATIONS               := true
 
+# dt2w
+# TARGET_TAP_TO_WAKE_NODE                     := "/sys/android_touch/doubletap2wake"
+
 # SELinux
 BOARD_SEPOLICY_DIRS += \
     device/samsung/kyleprods/sepolicy
