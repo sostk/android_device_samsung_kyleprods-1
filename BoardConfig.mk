@@ -122,6 +122,9 @@ COMMON_GLOBAL_CFLAGS                        += -DDISABLE_ASHMEM_TRACKING
 # Camera
 TARGET_HAS_LEGACY_CAMERA_HAL1               := true
 
+# Bionic (previously known as dlmalloc)
+MALLOC_SVELTE                               := true
+
 # Recovery
 # Compile with BUILD_TWRP=true when build TWRP recovery
 ifeq ($(BUILD_TWRP),true)
