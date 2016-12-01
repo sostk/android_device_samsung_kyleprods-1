@@ -93,6 +93,10 @@ PRODUCT_PACKAGES += \
 # Snap    
 PRODUCT_PACKAGES += \
     Snap
+
+# Widevine
+PRODUCT_PACKAGES += \
+    libshim_wvm
     
 # KSM
 PRODUCT_PROPERTY_OVERRIDES += \
