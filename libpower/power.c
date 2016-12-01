@@ -68,7 +68,7 @@ static void power_init(struct power_module *module)
 {
 }
 
-static void samsung_set_feature(struct power_module *module, feature_t feature, int state __unused)
+static void set_feature(struct power_module *module, feature_t feature, int state)
 {
     switch (feature) {
         case POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
@@ -76,6 +76,7 @@ static void samsung_set_feature(struct power_module *module, feature_t feature, 
             sysfs_write(DT2W_PATH, state ? "1" : "0");
             break;
        default:
+            ALOGW("Error setting the feature, it doesn't exist %d\n", feature);
             break;
     }
 }
@@ -88,7 +89,7 @@ struct local_power_module HAL_MODULE_INFO_SYM = {
     .base = {
         .common = {
             .tag = HARDWARE_MODULE_TAG,
-            .module_api_version = POWER_MODULE_API_VERSION_0_2,
+            .module_api_version = POWER_MODULE_API_VERSION_0_3,
             .hal_api_version = HARDWARE_HAL_API_VERSION,
             .id = POWER_HARDWARE_MODULE_ID,
             .name = "Hawaii Power HAL",
@@ -98,6 +99,6 @@ struct local_power_module HAL_MODULE_INFO_SYM = {
        .init = power_init,
        .setInteractive = power_set_interactive,
        .powerHint = power_hint,
-       .setFeature = samsung_set_feature
+       .setFeature = set_feature,
     },
 };
