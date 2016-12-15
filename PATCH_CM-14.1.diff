@@ -491,8 +491,8 @@ diff -ur a/frameworks/base/services/core/java/com/android/server/power/PowerMana
                              } else {
                                  if (!mProximityPositive) {
 diff -ur a/frameworks/av/include/media/stagefright/ColorConverter.h b/frameworks/av/include/media/stagefright/ColorConverter.h
---- a/frameworks/av/include/media/stagefright/ColorConverter.h	2016-11-02 16:43:49.876000000 +0000
-+++ b/frameworks/av/include/media/stagefright/ColorConverter.h	2016-11-02 16:43:02.576000000 +0000
+--- a/frameworks/av/include/media/stagefright/ColorConverter.h	2016-12-15 18:44:49.552000000 +0000
++++ b/frameworks/av/include/media/stagefright/ColorConverter.h	2016-12-15 18:48:33.436000000 +0000
 @@ -67,6 +67,9 @@
      status_t convertCbYCrY(
              const BitmapParams &src, const BitmapParams &dst);
@@ -504,8 +504,8 @@ diff -ur a/frameworks/av/include/media/stagefright/ColorConverter.h b/frameworks
              const BitmapParams &src, const BitmapParams &dst);
  
 diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/libstagefright/ACodec.cpp
---- a/frameworks/av/media/libstagefright/ACodec.cpp	2016-11-02 16:43:49.944000000 +0000
-+++ b/frameworks/av/media/libstagefright/ACodec.cpp	2016-11-02 16:43:02.580000000 +0000
+--- a/frameworks/av/media/libstagefright/ACodec.cpp	2016-12-15 18:44:49.644000000 +0000
++++ b/frameworks/av/media/libstagefright/ACodec.cpp	2016-12-15 18:48:33.444000000 +0000
 @@ -799,11 +799,7 @@
  
      status_t err;
@@ -518,7 +518,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
      } else {
          OMX_PARAM_PORTDEFINITIONTYPE def;
          InitOMXParams(&def);
-@@ -1004,6 +1000,25 @@
+@@ -1013,6 +1009,25 @@
      OMX_COLOR_FORMATTYPE eNativeColorFormat = def.format.video.eColorFormat;
      setNativeWindowColorFormat(eNativeColorFormat);
  #endif
@@ -544,7 +544,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
  
      ALOGV("gralloc usage: %#x(OMX) => %#x(ACodec)", omxUsage, usage);
      err = setNativeWindowSizeFormatAndUsage(
-@@ -1013,7 +1028,7 @@
+@@ -1022,7 +1037,7 @@
  #ifdef USE_SAMSUNG_COLORFORMAT
              eNativeColorFormat,
  #else
@@ -553,9 +553,9 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
  #endif
              mRotationDegrees,
              usage,
-@@ -1842,14 +1857,12 @@
-             mInputMetadataType = (MetadataBufferType)storeMeta;
+@@ -1859,14 +1874,12 @@
          }
+ #endif
  
 -        uint32_t usageBits;
 -        if (mOMX->getParameter(
@@ -573,7 +573,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
  
      int32_t prependSPSPPS = 0;
      if (encoder
-@@ -2350,22 +2363,24 @@
+@@ -2367,22 +2380,24 @@
          err = setMinBufferSize(kPortIndexInput, (size_t)maxInputSize);
      } else if (!strcmp("OMX.Nvidia.aac.decoder", mComponentName.c_str())) {
          err = setMinBufferSize(kPortIndexInput, 8192);  // XXX
@@ -612,7 +612,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
  
      // NOTE: both mBaseOutputFormat and mOutputFormat are outputFormat to signal first frame.
      mBaseOutputFormat = outputFormat;
-@@ -3159,12 +3174,37 @@
+@@ -3176,12 +3191,37 @@
      format.nIndex = 0;
      bool found = false;
  
@@ -650,7 +650,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
          if (err != OK) {
              return err;
          }
-@@ -3180,6 +3220,7 @@
+@@ -3197,6 +3237,7 @@
              colorFormat = format.eColorFormat;
          }
  
@@ -658,7 +658,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
          // The following assertion is violated by TI's video decoder.
          // CHECK_EQ(format.nIndex, index);
  
-@@ -3273,6 +3314,21 @@
+@@ -3290,6 +3331,21 @@
                  || format.eColorFormat == OMX_TI_COLOR_FormatYUV420PackedSemiPlanar) {
              break;
          }
@@ -680,7 +680,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
          // find best legacy non-standard format
          OMX_U32 flexibleEquivalent;
          if (legacyFormat.eColorFormat == OMX_COLOR_FormatUnused
-@@ -4852,6 +4908,16 @@
+@@ -4869,6 +4925,16 @@
      image.mNumPlanes = 0;
  
      const OMX_COLOR_FORMATTYPE fmt = params.eColorFormat;
@@ -697,7 +697,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
      image.mWidth = params.nFrameWidth;
      image.mHeight = params.nFrameHeight;
  
-@@ -7746,14 +7812,14 @@
+@@ -7780,14 +7846,14 @@
          }
      }
  
@@ -720,7 +720,7 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
  
      int32_t intraRefreshPeriod = 0;
      if (params->findInt32("intra-refresh-period", &intraRefreshPeriod)
-@@ -8397,9 +8463,13 @@
+@@ -8431,9 +8497,13 @@
                      builder->addColorFormat(flexibleEquivalent);
                  }
              }
@@ -738,73 +738,83 @@ diff -ur a/frameworks/av/media/libstagefright/ACodec.cpp b/frameworks/av/media/l
                  ALOGW("[%s] stopping checking formats after %u: %s(%x)",
                          name.c_str(), index,
 diff -ur a/frameworks/av/media/libstagefright/MPEG4Writer.cpp b/frameworks/av/media/libstagefright/MPEG4Writer.cpp
---- a/frameworks/av/media/libstagefright/MPEG4Writer.cpp	2016-11-02 16:43:49.956000000 +0000
-+++ b/frameworks/av/media/libstagefright/MPEG4Writer.cpp	2016-11-02 16:43:02.584000000 +0000
-@@ -2523,14 +2523,10 @@
+--- a/frameworks/av/media/libstagefright/MPEG4Writer.cpp	2016-12-15 18:44:49.652000000 +0000
++++ b/frameworks/av/media/libstagefright/MPEG4Writer.cpp	2016-12-15 18:50:34.876000000 +0000
+@@ -2529,18 +2529,10 @@
          if (mResumed) {
              int64_t durExcludingEarlierPausesUs = timestampUs - previousPausedDurationUs;
              if (WARN_UNLESS(durExcludingEarlierPausesUs >= 0ll, "for %s track", trackName)) {
 -                copy->release();
--                return ERROR_MALFORMED;
+-                mSource->stop();
+-                mIsMalformed = true;
+-                break;
              }
  
              int64_t pausedDurationUs = durExcludingEarlierPausesUs - mTrackDurationUs;
              if (WARN_UNLESS(pausedDurationUs >= lastDurationUs, "for %s track", trackName)) {
 -                copy->release();
--                return ERROR_MALFORMED;
+-                mSource->stop();
+-                mIsMalformed = true;
+-                break;
              }
  
              previousPausedDurationUs += pausedDurationUs - lastDurationUs;
-@@ -2539,8 +2535,6 @@
+@@ -2549,10 +2541,6 @@
  
          timestampUs -= previousPausedDurationUs;
          if (WARN_UNLESS(timestampUs >= 0ll, "for %s track", trackName)) {
 -            copy->release();
--            return ERROR_MALFORMED;
+-            mSource->stop();
+-            mIsMalformed = true;
+-            break;
          }
  
          if (!mIsAudio) {
-@@ -2566,8 +2560,6 @@
+@@ -2578,10 +2566,6 @@
              cttsOffsetTimeUs =
                      timestampUs + kMaxCttsOffsetTimeUs - decodingTimeUs;
              if (WARN_UNLESS(cttsOffsetTimeUs >= 0ll, "for %s track", trackName)) {
 -                copy->release();
--                return ERROR_MALFORMED;
+-                mSource->stop();
+-                mIsMalformed = true;
+-                break;
              }
  
              timestampUs = decodingTimeUs;
-@@ -2578,8 +2570,6 @@
+@@ -2592,10 +2576,6 @@
              currCttsOffsetTimeTicks =
                      (cttsOffsetTimeUs * mTimeScale + 500000LL) / 1000000LL;
              if (WARN_UNLESS(currCttsOffsetTimeTicks <= 0x0FFFFFFFFLL, "for %s track", trackName)) {
 -                copy->release();
--                return ERROR_MALFORMED;
+-                mSource->stop();
+-                mIsMalformed = true;
+-                break;
              }
  
              if (mStszTableEntries->count() == 0) {
-@@ -2620,8 +2610,6 @@
+@@ -2636,10 +2616,6 @@
          }
  
          if (WARN_UNLESS(timestampUs >= 0ll, "for %s track", trackName)) {
 -            copy->release();
--            return ERROR_MALFORMED;
+-            mSource->stop();
+-            mIsMalformed = true;
+-            break;
          }
  
          ALOGV("%s media time stamp: %" PRId64 " and previous paused duration %" PRId64,
-@@ -2641,9 +2629,9 @@
+@@ -2659,10 +2635,6 @@
          if (currDurationTicks < 0ll) {
              ALOGE("do not support out of order frames (timestamp: %lld < last: %lld for %s track",
                      (long long)timestampUs, (long long)lastTimestampUs, trackName);
 -            copy->release();
 -            mSource->stop();
--            return UNKNOWN_ERROR;
-+            //copy->release();
-+            //mSource->stop();
-+            //return UNKNOWN_ERROR;
+-            mIsMalformed = true;
+-            break;
          }
  
          // if the duration is different for this sample, see if it is close enough to the previous
-@@ -2741,7 +2729,6 @@
+@@ -2760,7 +2732,6 @@
      }
  
      if (isTrackMalFormed()) {
@@ -813,8 +823,8 @@ diff -ur a/frameworks/av/media/libstagefright/MPEG4Writer.cpp b/frameworks/av/me
  
      mOwner->trackProgressStatus(mTrackId, -1, err);
 diff -ur a/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp b/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp
---- a/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp	2016-11-02 16:43:49.992000000 +0000
-+++ b/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp	2016-11-02 16:43:02.584000000 +0000
+--- a/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp	2016-12-15 18:44:49.900000000 +0000
++++ b/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp	2016-12-15 18:48:33.444000000 +0000
 @@ -48,6 +48,7 @@
      switch (mSrcFormat) {
          case OMX_COLOR_FormatYUV420Planar:
@@ -914,9 +924,9 @@ diff -ur a/frameworks/av/media/libstagefright/colorconversion/ColorConverter.cpp
 +}  // namespace android
 \ No newline at end of file
 diff -ur a/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp b/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp
---- a/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp	2016-11-02 16:43:50.012000000 +0000
-+++ b/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp	2016-11-02 16:43:02.584000000 +0000
-@@ -381,6 +381,7 @@
+--- a/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp	2016-12-15 18:44:49.924000000 +0000
++++ b/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp	2016-12-15 18:48:33.456000000 +0000
+@@ -380,6 +380,7 @@
              }
          } else if (type == kMetadataBufferTypeANWBuffer
                  && header->nAllocLen >= sizeof(VideoNativeMetadata)) {
@@ -924,7 +934,7 @@ diff -ur a/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp b/fram
              VideoNativeMetadata &nativeMeta = *(VideoNativeMetadata *)data;
              if (nativeMeta.pBuffer != codecBuffer.mGraphicBuffer->getNativeBuffer()) {
                  // should never happen
-@@ -388,6 +389,7 @@
+@@ -387,6 +388,7 @@
                          nativeMeta.pBuffer, codecBuffer.mGraphicBuffer->getNativeBuffer());
                  CHECK(!"codecBufferEmptied: mismatched buffer");
              }
@@ -933,9 +943,9 @@ diff -ur a/frameworks/av/media/libstagefright/omx/GraphicBufferSource.cpp b/fram
      }
  
 diff -ur a/frameworks/av/services/audioflinger/Threads.cpp b/frameworks/av/services/audioflinger/Threads.cpp
---- a/frameworks/av/services/audioflinger/Threads.cpp	2016-11-02 16:43:50.056000000 +0000
-+++ b/frameworks/av/services/audioflinger/Threads.cpp	2016-11-02 16:43:15.304000000 +0000
-@@ -6294,6 +6294,7 @@
+--- a/frameworks/av/services/audioflinger/Threads.cpp	2016-12-15 18:44:49.988000000 +0000
++++ b/frameworks/av/services/audioflinger/Threads.cpp	2016-12-15 18:48:14.580000000 +0000
+@@ -6315,6 +6315,7 @@
          mTimestamp.mPosition[ExtendedTimestamp::LOCATION_SERVER] += framesRead;
          mTimestamp.mTimeNs[ExtendedTimestamp::LOCATION_SERVER] = systemTime();
  
@@ -943,7 +953,7 @@ diff -ur a/frameworks/av/services/audioflinger/Threads.cpp b/frameworks/av/servi
          // Update server timestamp with kernel stats
          if (mInput->stream->get_capture_position != nullptr
                  && mPipeSource.get() == nullptr /* don't obtain for FastCapture, could block */) {
-@@ -6309,6 +6310,7 @@
+@@ -6330,6 +6331,7 @@
                  // as the read obtains a lock, preventing the timestamp call from executing.
              }
          }
@@ -972,6 +982,7 @@ diff -ur a/packages/apps/CMParts/src/org/cyanogenmod/cmparts/input/ButtonSetting
  
          if (hasPowerKey) {
              if (!TelephonyUtils.isVoiceCapable(getActivity())) {             	
+
 diff -ur a/frameworks/base/services/core/java/com/android/server/am/ProcessList.java b/frameworks/base/services/core/java/com/android/server/am/ProcessList.java
 --- a/frameworks/base/services/core/java/com/android/server/am/ProcessList.java	2016-12-03 19:14:05.900000000 +0000
 +++ b/frameworks/base/services/core/java/com/android/server/am/ProcessList.java	2016-12-03 19:16:36.280000000 +0000
