@@ -186,9 +186,6 @@ BOARD_HARDWARE_CLASS                        := hardware/samsung/cmhw/
 TARGET_SPECIFIC_HEADER_PATH                 := device/samsung/kyleprods/include
 
 
-# dt2w
-# TARGET_TAP_TO_WAKE_NODE                     := "/sys/android_touch/doubletap2wake"
-
 # SELinux
 BOARD_SEPOLICY_DIRS += \
     device/samsung/kyleprods/sepolicy
