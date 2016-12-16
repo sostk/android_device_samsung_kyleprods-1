@@ -77,3 +77,5 @@ static power_profile profiles[PROFILE_MAX] = {
         .scaling_max_freq = 1400000,
     },
 };
+
+void set_feature(struct power_module *module, feature_t feature, int state);
