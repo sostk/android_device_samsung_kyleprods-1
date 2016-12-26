@@ -76,17 +76,6 @@
  #endif
  
  /*
---- a/system/sepolicy/domain.te
-+++ b/system/sepolicy/domain.te
-@@ -187,7 +187,7 @@
- # init starts in kernel domain and switches to init domain via setcon in
- # the init.rc, so the setenforce occurs while still in kernel. After
- # switching domains, there is never any need to setenforce again by init.
--neverallow * kernel:security setenforce;
-+#neverallow * kernel:security setenforce;
- neverallow { domain -kernel } kernel:security setcheckreqprot;
- 
- # No booleans in AOSP policy, so no need to ever set them.
 diff -ur a/frameworks/base/telephony/java/android/telephony/TelephonyManager.java b/frameworks/base/telephony/java/android/telephony/TelephonyManager.java
 --- a/frameworks/base/telephony/java/android/telephony/TelephonyManager.java
 +++ b/frameworks/base/telephony/java/android/telephony/TelephonyManager.java
