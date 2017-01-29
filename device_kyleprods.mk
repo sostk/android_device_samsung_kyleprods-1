@@ -57,12 +57,12 @@ PRODUCT_PACKAGES += \
 # Stagefright FFmpeg plugin/FFmpeg config
 PRODUCT_PACKAGES += \
     libffmpeg_extractor \
-	libffmpeg_omx \
-	media_codecs_ffmpeg.xml
+    libffmpeg_omx \
+    media_codecs_ffmpeg.xml
 
 PRODUCT_PROPERTY_OVERRIDES += \
     media.sf.omx-plugin=libffmpeg_omx.so \
-	media.sf.extractor-plugin=libffmpeg_extractor.so
+    media.sf.extractor-plugin=libffmpeg_extractor.so
 
 # Media
 PRODUCT_PROPERTY_OVERRIDES += \
