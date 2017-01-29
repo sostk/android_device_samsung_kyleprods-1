@@ -19,7 +19,7 @@ TARGET_GLOBAL_CFLAGS                        += -mtune=cortex-a9 -mfpu=neon -mflo
 TARGET_GLOBAL_CPPFLAGS                      += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -O3 -funsafe-math-optimizations
 
 # Assert
-TARGET_OTA_ASSERT_DEVICE                    := kyleprods,S7582,GT-S7582,hawaii
+TARGET_OTA_ASSERT_DEVICE                    := kyleprods
 
 # Kernel
 BOARD_MKBOOTIMG_ARGS                        := --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100
@@ -45,12 +45,14 @@ TARGET_KERNEL_HAVE_NTFS                     := true
 
 # Partition size
 BOARD_BOOTIMAGE_PARTITION_SIZE              := 8388608
-# //Fake Values to workaround build
-BOARD_RECOVERYIMAGE_PARTITION_SIZE          := 10279424
-# //
+ifeg ($(BUILD_TWRP), true)
+BOARD_RECOVERYIMAGE_PARTITION_SIZE          := 9191424
+else
+BOARD_RECOVERYIMAGE_PARTITION_SIZE          := 20000000
+endif
 BOARD_SYSTEMIMAGE_PARTITION_SIZE            := 1200283648
 BOARD_SYSTEMIMAGE_JOURNAL_SIZE              := 0
-BOARD_USERDATAIMAGE_PARTITION_SIZE          := 2382364672
+BOARD_USERDATAIMAGE_PARTITION_SIZE          := 2382348288
 BOARD_CACHEIMAGE_PARTITION_SIZE             := 209715200
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE           := ext4
 BOARD_FLASH_BLOCK_SIZE                      := 262144
@@ -84,10 +86,8 @@ WIFI_BAND                                   := 802_11_ABG
 # LightHAL
 TARGET_PROVIDES_LIBLIGHT                    := true
 
-
-# Resolution
-TARGET_SCREEN_HEIGHT                        := 800
-TARGET_SCREEN_WIDTH                         := 480
+# Boot animation
+TARGET_BOOT_ANIMATION_RES                   := 480
 
 # Hardware rendering
 BOARD_EGL_WORKAROUND_BUG_10194508           := true
@@ -122,7 +122,7 @@ BOARD_GLOBAL_CFLAGS                         += -DDISABLE_ASHMEM_TRACKING
 TARGET_HAS_LEGACY_CAMERA_HAL1               := true
 
 # Some of our vendor libs have text relocations
-TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS      := true
+TARGET_ALLOW_TEXT_RELOCATIONS               := true
 
 # Bionic (previously known as dlmalloc)
 MALLOC_SVELTE                               := true
@@ -172,9 +172,6 @@ BOARD_VOLD_MAX_PARTITIONS                   := 19
 
 # MTP
 BOARD_MTP_DEVICE                            := /dev/mtp_usb
-
-# CMHW
-BOARD_HARDWARE_CLASS                        := hardware/samsung/cmhw/
 
 # GPS
 TARGET_SPECIFIC_HEADER_PATH                 := device/samsung/kyleprods/include

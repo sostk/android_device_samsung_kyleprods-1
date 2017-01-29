@@ -1,21 +1,18 @@
-$(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
-
 $(call inherit-product-if-exists, vendor/samsung/kyleproxx/kyleproxx-common-vendor.mk)
 
 PRODUCT_LOCALES += hdpi
 PRODUCT_AAPT_CONFIG := normal hdpi xhdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
 
-DEVICE_PACKAGE_OVERLAYS += device/samsung/kyleprods/overlay
+DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
 
 # Init files
 PRODUCT_COPY_FILES += \
-    device/samsung/kyleprods/rootdir/fstab.hawaii_ss_kyleprods:root/fstab.hawaii_ss_kyleprods \
-    device/samsung/kyleprods/rootdir/init.rc:root/init.rc \
-    device/samsung/kyleprods/rootdir/init.hawaii_ss_kyleprods.rc:root/init.hawaii_ss_kyleprods.rc \
-    device/samsung/kyleprods/rootdir/init.bcm2166x.usb.rc:root/init.bcm2166x.usb.rc \
-    device/samsung/kyleprods/rootdir/init.log.rc:root/init.log.rc \
-    device/samsung/kyleprods/rootdir/ueventd.hawaii_ss_kyleprods.rc:root/ueventd.hawaii_ss_kyleprods.rc
+    $(LOCAL_PATH)/rootdir/fstab.hawaii_ss_kyleprods:root/fstab.hawaii_ss_kyleprods \
+    $(LOCAL_PATH)/rootdir/init.hawaii_ss_kyleprods.rc:root/init.hawaii_ss_kyleprods.rc \
+    $(LOCAL_PATH)/rootdir/init.bcm2166x.usb.rc:root/init.bcm2166x.usb.rc \
+    $(LOCAL_PATH)/rootdir/init.log.rc:root/init.log.rc \
+    $(LOCAL_PATH)/rootdir/ueventd.hawaii_ss_kyleprods.rc:root/ueventd.hawaii_ss_kyleprods.rc
 
 # Google's Software Decoder.
 PRODUCT_COPY_FILES += \
@@ -25,7 +22,7 @@ PRODUCT_COPY_FILES += \
 
 # Configs
 PRODUCT_COPY_FILES += \
-    device/samsung/kyleprods/configs/media_codecs.xml:system/etc/media_codecs.xml
+    $(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml
 
 # Insecure ADB
 ADDITIONAL_DEFAULT_PROPERTIES += \
@@ -46,10 +43,6 @@ PRODUCT_PACKAGES += \
     libstlport \
     libglgps-compat
 
-# USB accessory
-PRODUCT_PACKAGES += \
-    com.android.future.usb.accessory
-
 # Misc other modules
 PRODUCT_PACKAGES += \
     audio.a2dp.default \
@@ -60,6 +53,16 @@ PRODUCT_PACKAGES += \
     lights.hawaii \
     power.hawaii \
     libstagefrighthw
+	
+# Stagefright FFmpeg plugin/FFmpeg config
+PRODUCT_PACKAGES += \
+    libffmpeg_extractor \
+	libffmpeg_omx \
+	media_codecs_ffmpeg.xml
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    media.sf.omx-plugin=libffmpeg_omx.so \
+	media.sf.extractor-plugin=libffmpeg_extractor.so
 
 # Media
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -71,14 +74,10 @@ PRODUCT_PACKAGES += \
     ebtables \
     ethertypes
 
-# Gello Browser
-PRODUCT_PACKAGES += \
-    Gello
-
-# Widevine
+# WideVine shim
 PRODUCT_PACKAGES += \
     libshim_wvm
-    
+
 # KSM
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.ksm.default=1
@@ -141,21 +140,12 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.kernel.android.checkjni=0 \
     ro.kernel.checkjni=0 \
     dalvik.vm.checkjni=false
-
-# Dex2Oat multi-thread
+	
+# ART
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.sys.fw.dex2oat_thread_count=2
+    dalvik.vm.dex2oat-flags=--no-watch-dog
 
 # Dalvik heap config
 include frameworks/native/build/phone-hdpi-512-dalvik-heap.mk
 
-# Texture config.
-include frameworks/native/build/phone-xxhdpi-2048-hwui-memory.mk
-
-$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/config/config-bcm.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
-
-PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
-PRODUCT_NAME := full_kyleprods
-PRODUCT_DEVICE := kyleprods
-PRODUCT_MODEL := GT-S7582
+$(call inherit-product, hardware/broadcom/wlan/bcmdhd/config/config-bcm.mk)

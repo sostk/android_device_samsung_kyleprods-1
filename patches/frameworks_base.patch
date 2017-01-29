@@ -1,0 +1,398 @@
+From de48c7e13eb4165736dfe218ab111053093629fa Mon Sep 17 00:00:00 2001
+From: Pawit Pornkitprasan <p.pawit@gmail.com>
+Date: Wed, 31 Aug 2016 18:29:52 +0000
+Subject: [PATCH] TelephonyManager: set properties in Broadcom-style as expected by RIL
+
+---
+ .../java/android/telephony/TelephonyManager.java   | 62 +++++++---------------
+ 1 file changed, 19 insertions(+), 43 deletions(-)
+
+diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
+index 6e504d1..7012b70 100644
+--- a/telephony/java/android/telephony/TelephonyManager.java
++++ b/telephony/java/android/telephony/TelephonyManager.java
+@@ -3668,49 +3668,19 @@ public int getDefaultSim() {
+      * @hide
+      */
+     public static void setTelephonyProperty(int phoneId, String property, String value) {
+-        String propVal = "";
+-        String p[] = null;
+-        String prop = SystemProperties.get(property);
+-
+-        if (value == null) {
+-            value = "";
+-        }
+-
+-        if (prop != null) {
+-            p = prop.split(",");
+-        }
+-
+         if (!SubscriptionManager.isValidPhoneId(phoneId)) {
+             Rlog.d(TAG, "setTelephonyProperty: invalid phoneId=" + phoneId +
+-                    " property=" + property + " value: " + value + " prop=" + prop);
++                    " property=" + property + " value: " + value);
+             return;
+         }
+ 
+-        for (int i = 0; i < phoneId; i++) {
+-            String str = "";
+-            if ((p != null) && (i < p.length)) {
+-                str = p[i];
+-            }
+-            propVal = propVal + str + ",";
+-        }
+-
+-        propVal = propVal + value;
+-        if (p != null) {
+-            for (int i = phoneId + 1; i < p.length; i++) {
+-                propVal = propVal + "," + p[i];
+-            }
+-        }
+-
+-        if (property.length() > SystemProperties.PROP_NAME_MAX
+-                || propVal.length() > SystemProperties.PROP_VALUE_MAX) {
+-            Rlog.d(TAG, "setTelephonyProperty: property to long phoneId=" + phoneId +
+-                    " property=" + property + " value: " + value + " propVal=" + propVal);
+-            return;
++        if (phoneId > 0) {
++           property += "_" + phoneId;
+         }
+ 
+         Rlog.d(TAG, "setTelephonyProperty: success phoneId=" + phoneId +
+-                " property=" + property + " value: " + value + " propVal=" + propVal);
+-        SystemProperties.set(property, propVal);
++                " property=" + property + " value: " + value);
++        SystemProperties.set(property, value);
+     }
+ 
+     /**
+@@ -3807,15 +3777,21 @@ public static boolean putIntAtIndex(android.content.ContentResolver cr,
+      * @hide
+      */
+     public static String getTelephonyProperty(int phoneId, String property, String defaultVal) {
+-        String propVal = null;
+-        String prop = SystemProperties.get(property);
+-        if ((prop != null) && (prop.length() > 0)) {
+-            String values[] = prop.split(",");
+-            if ((phoneId >= 0) && (phoneId < values.length) && (values[phoneId] != null)) {
+-                propVal = values[phoneId];
+-            }
++        if (!SubscriptionManager.isValidPhoneId(phoneId)) {
++            Rlog.d(TAG, "getTelephonyProperty: invalid phoneId=" + phoneId +
++                    " property=" + property);
++            return defaultVal;
+         }
+-        return propVal == null ? defaultVal : propVal;
++        if (phoneId > 0) {
++            property += "_" + phoneId;
++        }
++
++        String propVal = SystemProperties.get(property);
++
++        Rlog.d(TAG, "getTelephonyProperty: return propVal='" + propVal + "' phoneId=" + phoneId
++                + " property='" + property + "' defaultVal='" + defaultVal);
++
++        return propVal.isEmpty() ? defaultVal : propVal;
+     }
+ 
+     /** @hide */
+
+From 6fa458e9f6f14ab73a5cff1c0f45a3866aed0c61 Mon Sep 17 00:00:00 2001
+From: ishantvivek <ishantvivek1311@gmail.com>
+Date: Thu, 29 Sep 2016 19:13:38 +0000
+Subject: [PATCH] lmk: Refactor low memory killer values
+
+[Forward port to  Nougat]
+* Atm,lmk default values for 768mb ram &
+480*800 display resolution
+* isn't getting calculated properly,and not triggering
+lmk on memory
+* pressure instead get reboot. Evidence: LMK values for 32Bit is
+calculated this way: mOomMinFree[i] = (int)(low + ((high-low)*scale)) Here scale=1
+As float scale = scaleMem > scaleDisp ? scaleMem : scaleDisp; And scaleMem
+is:float scaleMem = ((float)(mTotalMemMb-350))/(700-350); scaleDisp is: int
+minSize = 480*800; // 384000
+        int maxSize = 1280*800; // 1024000 230400 870400 .264
+	        float scaleDisp =
+		((float)(displayWidth*displayHeight)-minSize)/(maxSize-minSize)
+Our displayWidth*displayHeight=38400,so scaleDisp=(38400-38400)=0.Hence scaleDisp
+is 0. scaleMem=768-350/350=~1.19 So scaleMem>Scaledisp. Hence scalemem:scaledisp
+is >1. Hence scaledisp would be 1. So final mOomMinFree[i] = (int)(high) and
+high=mOomMinFreeHigh32Bit[i]; which is equal to private final int[]
+mOomMinFreeHigh32Bit = new int[] {
+	            61440, 76800, 92160,
+		    107520, 137660, 174948
+These values are kinda irrelevant for a 768mb ram. 240 mb min free for foreground app?Is this a joke? I
+don't understand why these values dont create issues in 5.1.*, but in 6.0 because
+of such high value!?(maybe some api change?) ,i think its not getting trigger
+properly.This could be wrong but theortically it seems legit.I have modified these
+values suitable for 768mb RAM.
+
+* Also increased min free cached apps.
+
+Signed-off-by: ishantvivek <ishantvivek1311@gmail.com>
+---
+ services/core/java/com/android/server/am/ProcessList.java | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/services/core/java/com/android/server/am/ProcessList.java b/services/core/java/com/android/server/am/ProcessList.java
+index 475b155..059b10c 100644
+--- a/services/core/java/com/android/server/am/ProcessList.java
++++ b/services/core/java/com/android/server/am/ProcessList.java
+@@ -189,8 +189,8 @@
+     // These are the low-end OOM level limits.  This is appropriate for an
+     // HVGA or smaller phone with less than 512MB.  Values are in KB.
+     private final int[] mOomMinFreeLow = new int[] {
+-            12288, 18432, 24576,
+-            36864, 43008, 49152
++            17920, 20480, 25600,
++            38400, 43008, 49152
+     };
+     // These are the high-end OOM level limits.  This is appropriate for a
+     // 1280x800 or larger screen with around 1GB RAM.  Values are in KB.
+@@ -264,7 +264,7 @@ private void updateOomLevels(int displayWidth, int displayHeight, boolean write)
+                 if (i == 4) high = (high*3)/2;
+                 else if (i == 5) high = (high*7)/4;
+             }
+-            mOomMinFree[i] = (int)(low + ((high-low)*scale));
++            mOomMinFree[i] = (int)(low);
+         }
+ 
+         if (minfree_abs >= 0) {
+
+From 3df25dfbef0f394facb89fc1c64604a8c1a556ed Mon Sep 17 00:00:00 2001
+From: ishantvivek <ishantvivek1311@gmail.com>
+Date: Mon, 3 Oct 2016 04:03:16 +0000
+Subject: [PATCH] KeyEvent: Add support for Home key wakeup Add Home key to list of wakeable buttons.
+
+---
+ core/java/android/view/KeyEvent.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/java/android/view/KeyEvent.java b/core/java/android/view/KeyEvent.java
+index 990d553..9d8d825 100644
+--- a/core/java/android/view/KeyEvent.java
++++ b/core/java/android/view/KeyEvent.java
+@@ -1867,6 +1867,7 @@ public static final boolean isWakeKey(int keyCode) {
+         switch (keyCode) {
+             case KeyEvent.KEYCODE_BACK:
+             case KeyEvent.KEYCODE_MENU:
++            case KeyEvent.KEYCODE_HOME:
+             case KeyEvent.KEYCODE_WAKEUP:
+             case KeyEvent.KEYCODE_PAIRING:
+             case KeyEvent.KEYCODE_STEM_1:
+
+From 5724642fea1f359cbeafd11e95b5e2cb7c475dc0 Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Date: Fri, 23 Nov 2012 14:23:16 +0000
+Subject: [PATCH] Reintroduce button-backlight (and respective inactivity timeout)
+
+The power manager rewrite from Change I1d7a52e98f0449f76d70bf421f6a7f245957d1d7
+completely removed support for control of the button backlights, which makes
+all capacitive buttons out there stay dark. The commit message in that change
+mentions it hasn't been implemented _yet_, so this fix should be temporary
+until upstream does their own implementation
+
+[RC: Updated to 5.0]
+
+Change-Id: I6094c446e0b8c23f57d30652a3cbd35dee5e821a
+---
+ .../com/android/server/display/DisplayPowerController.java    | 11 +++++++++++
+ .../java/com/android/server/power/PowerManagerService.java    | 10 ++++++++++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
+index 61af8ed..a659bd6 100644
+--- a/services/core/java/com/android/server/display/DisplayPowerController.java
++++ b/services/core/java/com/android/server/display/DisplayPowerController.java
+@@ -19,6 +19,7 @@
+ import com.android.internal.app.IBatteryStats;
+ import com.android.server.LocalServices;
+ import com.android.server.am.BatteryStatsService;
++import com.android.server.lights.LightsManager;
+ 
+ import android.animation.Animator;
+ import android.animation.ObjectAnimator;
+@@ -123,6 +124,9 @@
+     // Battery stats.
+     private final IBatteryStats mBatteryStats;
+ 
++    // The lights service.
++    private final LightsManager mLights;
++
+     // The sensor manager.
+     private final SensorManager mSensorManager;
+ 
+@@ -264,6 +268,7 @@ public DisplayPowerController(Context context,
+         mCallbacks = callbacks;
+ 
+         mBatteryStats = BatteryStatsService.getService();
++        mLights = LocalServices.getService(LightsManager.class);
+         mSensorManager = sensorManager;
+         mWindowManagerPolicy = LocalServices.getService(WindowManagerPolicy.class);
+         mBlanker = blanker;
+@@ -606,6 +611,12 @@ private void updatePowerState() {
+         // Use zero brightness when screen is off.
+         if (state == Display.STATE_OFF) {
+             brightness = PowerManager.BRIGHTNESS_OFF;
++            mLights.getLight(LightsManager.LIGHT_ID_BUTTONS).setBrightness(brightness);
++        }
++
++        // Disable button lights when dozing
++        if (state == Display.STATE_DOZE || state == Display.STATE_DOZE_SUSPEND) {
++            mLights.getLight(LightsManager.LIGHT_ID_BUTTONS).setBrightness(PowerManager.BRIGHTNESS_OFF);
+         }
+ 
+         // Configure auto-brightness.
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index 2824e6e..8c3bdbc 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -181,6 +181,8 @@
+     private static final int HALT_MODE_REBOOT = 1;
+     private static final int HALT_MODE_REBOOT_SAFE_MODE = 2;
+ 
++    private static final int BUTTON_ON_DURATION = 5 * 1000;
++
+     private final Context mContext;
+     private final ServiceThread mHandlerThread;
+     private final PowerManagerHandler mHandler;
+@@ -196,6 +198,7 @@
+     private SettingsObserver mSettingsObserver;
+     private DreamManagerInternal mDreamManager;
+     private Light mAttentionLight;
++    private Light mButtonsLight;
+ 
+     private final Object mLock = new Object();
+ 
+@@ -599,6 +602,7 @@ public void systemReady(IAppOpsService appOps) {
+ 
+             mLightsManager = getLocalService(LightsManager.class);
+             mAttentionLight = mLightsManager.getLight(LightsManager.LIGHT_ID_ATTENTION);
++            mButtonsLight = mLightsManager.getLight(LightsManager.LIGHT_ID_BUTTONS);
+ 
+             // Initialize display power management.
+             mDisplayManagerInternal.initPowerManagement(
+@@ -1715,6 +1719,12 @@ private void updateUserActivitySummaryLocked(long now, int dirty) {
+                     nextTimeout = mLastUserActivityTime
+                             + screenOffTimeout - screenDimDuration;
+                     if (now < nextTimeout) {
++                        if (now > mLastUserActivityTime + BUTTON_ON_DURATION) {
++                            mButtonsLight.setBrightness(0);
++                        } else {
++                            mButtonsLight.setBrightness(mDisplayPowerRequest.screenBrightness);
++                            nextTimeout = now + BUTTON_ON_DURATION;
++                        }
+                         mUserActivitySummary = USER_ACTIVITY_SCREEN_BRIGHT;
+                     } else {
+                         nextTimeout = mLastUserActivityTime + screenOffTimeout;
+
+From 8aebd677e31c04fc1d9babdecec52cfbb0acfd27 Mon Sep 17 00:00:00 2001
+From: Pawit Pornkitprasan <p.pawit@gmail.com>
+Date: Tue, 15 Nov 2016 10:52:37 +0000
+Subject: [PATCH] [PATCH] PowerManagerService: only turn on button light when any button is pressed
+
+* Also reduce the timeout to 2 seconds
+
+This more closely emulates stock Samsung behavior
+---
+ .../core/java/com/android/server/power/PowerManagerService.java  | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index 389ea13..d75a665 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -183,7 +183,7 @@
+     private static final int HALT_MODE_REBOOT = 1;
+     private static final int HALT_MODE_REBOOT_SAFE_MODE = 2;
+ 
+-    private static final int BUTTON_ON_DURATION = 5 * 1000;
++    private static final int BUTTON_ON_DURATION = 2 * 1000;
+ 
+     private final Context mContext;
+     private final ServiceThread mHandlerThread;
+@@ -259,6 +259,7 @@
+     // Timestamp of the last call to user activity.
+     private long mLastUserActivityTime;
+     private long mLastUserActivityTimeNoChangeLights;
++    private long mLastButtonActivityTime;
+ 
+     // Timestamp of last interactive power hint.
+     private long mLastInteractivePowerHintTime;
+@@ -1222,6 +1223,10 @@ private boolean userActivityNoUpdateLocked(long eventTime, int event, int flags,
+                     return true;
+                 }
+             } else {
++                if (eventTime > mLastButtonActivityTime && (event & PowerManager.USER_ACTIVITY_EVENT_BUTTON) !=0) {
++                    mLastButtonActivityTime = eventTime;
++                    mDirty |= DIRTY_USER_ACTIVITY;
++                }
+                 if (eventTime > mLastUserActivityTime) {
+                     mLastUserActivityTime = eventTime;
+                     mDirty |= DIRTY_USER_ACTIVITY;
+@@ -1778,7 +1783,7 @@ private void updateUserActivitySummaryLocked(long now, int dirty) {
+                             mKeyboardLight.setBrightness(mKeyboardVisible ?
+                                     keyboardBrightness : 0);
+                             if (mButtonTimeout != 0
+-                                    && now > mLastUserActivityTime + mButtonTimeout) {
++                                    && now > mLastButtonActivityTime + mButtonTimeout) {
+                                 mButtonsLight.setBrightness(0);
+                             } else {
+                                 mButtonsLight.setBrightness(buttonBrightness);
+
+From bcf7dfd053bfbba939d56bdcad2ee23cfe06f656 Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Date: Mon, 4 Nov 2013 02:22:43 +0000
+Subject: [PATCH] Forward port Samsung STK support (frameworks/base)
+
+[pawitp: port to Lollipop]
+
+Change-Id: I08d169bc466df290fca838b09f6b0fbea2ac82a8
+
+Conflicts:
+	core/res/res/values/symbols.xml
+	telephony/java/com/android/internal/telephony/RILConstants.java
+---
+ core/res/res/values/config.xml                                  | 3 +++
+ core/res/res/values/symbols.xml                                 | 3 +++
+ telephony/java/com/android/internal/telephony/RILConstants.java | 2 ++
+ 3 files changed, 8 insertions(+)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index dc6c7d7..aee5d28 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -2576,4 +2576,7 @@
+         <!-- Verizon requires any SMS that starts with //VZWVVM to be treated as a VVM SMS-->
+         <item>310004,310010,310012,310013,310590,310890,310910,311110,311270,311271,311272,311273,311274,311275,311276,311277,311278,311279,311280,311281,311282,311283,311284,311285,311286,311287,311288,311289,311390,311480,311481,311482,311483,311484,311485,311486,311487,311488,311489;^//VZWVVM.*</item>
+     </string-array>
++
++    <!-- Boolean to enable stk functionality on Samsung phones -->
++    <bool name="config_samsung_stk">true</bool>
+ </resources>
+diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
+index 2fe3257..ad9d5f4 100644
+--- a/core/res/res/values/symbols.xml
++++ b/core/res/res/values/symbols.xml
+@@ -2653,6 +2653,9 @@
+   <java-symbol type="layout" name="unsupported_display_size_dialog_content" />
+   <java-symbol type="string" name="unsupported_display_size_message" />
+ 
++  <!-- Samsung STK -->
++  <java-symbol type="bool" name="config_samsung_stk" />
++
+   <java-symbol type="layout" name="notification_material_action_emphasized" />
+ 
+   <!-- Package name for the device provisioning package -->
+diff --git a/telephony/java/com/android/internal/telephony/RILConstants.java b/telephony/java/com/android/internal/telephony/RILConstants.java
+index a91e9be..59f1730 100644
+--- a/telephony/java/com/android/internal/telephony/RILConstants.java
++++ b/telephony/java/com/android/internal/telephony/RILConstants.java
+@@ -462,4 +462,6 @@
+     int RIL_UNSOL_STK_CC_ALPHA_NOTIFY = 1044;
+     int RIL_UNSOL_LCEDATA_RECV = 1045;
+     int RIL_UNSOL_PCO_DATA = 1046;
++
++    int RIL_UNSOL_STK_SEND_SMS_RESULT = 11002; /* Samsung STK */
+ }
