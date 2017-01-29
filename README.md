@@ -28,7 +28,7 @@ patch -p1 < device/samsung/kyleprods/AOSPA\ 7.1.0\ patches.diff
 
 ### Other resources:
   - Kernel source: https://github.com/ishantvivek/android_kernel_samsung_kyleproxx/tree/cm-14.1
-  - Vendor blobs: https://github.com/TheComputerGuy96/android_vendor_samsung_kyleproxx/tree/nougat-mr1
+  - Vendor blobs: https://github.com/ishantvivek/android_vendor_samsung_kyleproxx/tree/7.0
 
 ### More information:
 ```sh
