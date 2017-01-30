@@ -13,17 +13,17 @@ diff --git a/res/values/strings.xml b/res/values/strings.xml
 index 34cdeb5..bf1cbc1 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -419,6 +419,9 @@
-      <string name="preferred_network_mode_lte_cdma_summary">Preferred network mode: LTE / CDMA</string>
-      <!-- Mobile network settings, summary for preferred network mode TDSCDMTA [CHAR LIMIT=100] -->
-      <string name="preferred_network_mode_tdscdma_summary">Preferred network mode: TDSCDMA</string>
-+     <string name="preferred_network_mode_wcdma_only_choice">WCDMA only</string>
-+     <string name="preferred_network_mode_gsm_only_choice">GSM only</string>
-+     <string name="preferred_network_mode_gsm_wcdma_preferred_choice">GSM/WCDMA preferred</string>
+@@ -465,6 +465,9 @@
+    <string name="callFailed_incoming_cb_enabled">Party has barred all Incoming calls.</string>
+    <!-- In-call screen: status label for an incoming call that is not answered and forwarded  -->
+    <string name="callUnanswered_forwarded">Call Unanswered and Forwarded</string>
++    <string name="preferred_network_mode_wcdma_only_choice">WCDMA only</string>
++    <string name="preferred_network_mode_gsm_only_choice">GSM only</string>
++    <string name="preferred_network_mode_gsm_wcdma_preferred_choice">GSM/WCDMA preferred</string>
  
-     <string-array name="preferred_network_mode_choices">
-         <item>LTE / WCDMA</item>
-@@ -639,12 +642,14 @@
+     <string-array name="preferred_network_mode_choices" translatable="false">
+         <item>LTE/TDSCDMA/CDMA/EVDO/GSM/WCDMA </item>
+@@ -707,12 +710,14 @@
      </string-array>
  
      <string-array name="enabled_networks_except_lte_choices" translatable="false">

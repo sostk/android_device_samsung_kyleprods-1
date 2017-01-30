@@ -215,65 +215,6 @@ index f90e28b..6068cf8 100644
  void RefBase::renameRefs(size_t n, const ReferenceRenamer& renamer) {
      for (size_t i=0 ; i<n ; i++) {
 
-From 6d9c2d1e5d9ebe5d22216e6fd994ac2f6903959c Mon Sep 17 00:00:00 2001
-From: Pawit Pornkitprasan <p.pawit@gmail.com>
-Date: Tue, 18 Nov 2014 22:36:32 +0700
-Subject: [PATCH] charger: allow home button to wake
-
-A squashed commit of the following:
-
-commit 6ce21d726a967b2cc942476758b9ab3851ff39f1
-Author: Pawit Pornkitprasan <p.pawit@gmail.com>
-Date:   Sun Feb 3 22:21:32 2013 +0700
-
-    charger: do not suspend when handling home
-
-    When using Google's suspend implementation, home press should also wake
-    the device from suspend
-
-    Change-Id: I51f3e45c5cb418b0b3718e7223a1336876379043
-
-commit 75a7cf84df719d8cf5cd77093b3f9fee3c09017e
-Author: Pawit Pornkitprasan <p.pawit@gmail.com>
-Date:   Sat Jul 21 22:09:37 2012 +0700
-
-    charger: allow home button to wake
-
-    On certain devices (e.g. galaxysmtd), the user expects the physical
-    home button to be able to wake the device as well as the power button.
-
-    Change-Id: If764f36aba3810dfa5233af8baf0a740b04889e0
-
-Change-Id: I362b227e26bc864a2cad471df799bce2d682ecee
----
- healthd/healthd_mode_charger.cpp | 6 ++++++
- 1 file changed, 6 insertions(+)
-
-diff --git a/healthd/healthd_mode_charger.cpp b/healthd/healthd_mode_charger.cpp
-index 5846626..1c3b2a8 100644
---- a/healthd/healthd_mode_charger.cpp
-+++ b/healthd/healthd_mode_charger.cpp
-@@ -547,6 +547,11 @@ static void process_key(struct charger *charger, int code, int64_t now)
-                 kick_animation(charger->batt_anim);
-             }
-         }
-+    } else {
-+        if (key->pending) {
-+            request_suspend(false);
-+            kick_animation(charger->batt_anim);
-+        }
-     }
- 
-     key->pending = false;
-@@ -555,6 +560,7 @@ static void process_key(struct charger *charger, int code, int64_t now)
- static void handle_input_state(struct charger *charger, int64_t now)
- {
-     process_key(charger, KEY_POWER, now);
-+    process_key(charger, KEY_HOME, now);
- 
-     if (charger->next_key_check != -1 && now > charger->next_key_check)
-         charger->next_key_check = -1;
-
 From c7229d0ffb537775a16077853eb802486c5cc6a2 Mon Sep 17 00:00:00 2001
 From: ishantvivek <ishantvivek1311@gmail.com>
 Date: Thu, 1 Sep 2016 09:14:39 +0000
@@ -317,7 +258,7 @@ Subject: [PATCH] init: change SELinux to permissive
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/init/init.cpp b/init/init.cpp
-index b01f6f7..ac5818d 100644
+index b01f6f7..ac5818d 100755
 --- a/init/init.cpp
 +++ b/init/init.cpp
 @@ -496,7 +496,7 @@ static void selinux_init_all_handles(void)
