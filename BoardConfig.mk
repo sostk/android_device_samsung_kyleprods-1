@@ -86,9 +86,6 @@ WIFI_BAND                                   := 802_11_ABG
 # LightHAL
 TARGET_PROVIDES_LIBLIGHT                    := true
 
-# Boot animation
-TARGET_BOOT_ANIMATION_RES                   := 480
-
 # Hardware rendering
 BOARD_EGL_WORKAROUND_BUG_10194508           := true
 TARGET_USES_ION                             := true

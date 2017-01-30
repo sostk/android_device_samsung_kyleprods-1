@@ -1,3 +1,6 @@
+# Boot animation
+TARGET_BOOT_ANIMATION_RES := 480
+
 # Inherit some common AOSPA stuff
 include vendor/pa/main.mk
 
