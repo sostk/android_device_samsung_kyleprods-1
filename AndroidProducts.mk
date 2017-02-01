@@ -1,2 +1,2 @@
-PRODUCT_MAKEFILES := \
-    $(LOCAL_PATH)/aospa.mk
+PRODUCT_MAKEFILES += \
+    $(LOCAL_DIR)/pa_kyleprods.mk
